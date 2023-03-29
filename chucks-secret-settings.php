@@ -3,7 +3,7 @@
  * Plugin Name: Chuck's Secret Settings
  * Plugin URI: https://github.com/melekin/chucks-secret-settings
  * Description: Adds a new configuration page to the settings menu
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Charles Peck
  * Author URI: https://g.dev/chuck
  * License: GPL2
@@ -80,7 +80,12 @@ function chuck_password_reset_message_callback() {
 	$options = get_option( 'chuck_secret_settings_options' );
 	$message = isset( $options['password_reset_message'] ) ? $options['password_reset_message'] : '';
 
-	echo '<textarea name="chuck_secret_settings_options[password_reset_message]" rows="5" cols="50">' . esc_textarea( $message ) . '</textarea>';
+	echo wp_editor( $message, 'chuck_secret_settings_options[password_reset_message]', array(
+		'media_buttons' => false,
+		'textarea_rows' => 10,
+		'teeny' => true,
+	) );
+	echo '<p class="description">' . __('Use [reset_password_url] for the password reset URL, [user_login] for the user\'s username, and [site_name] for the site name.') . '</p>';
 }
 
 // Display the password reset subject field
@@ -93,7 +98,7 @@ function chuck_password_reset_subject_callback() {
 
 // Validate the input data
 function chuck_settings_validate( $input ) {
-	$input['password_reset_message'] = sanitize_textarea_field( $input['password_reset_message'] );
+	$input['password_reset_message'] = wp_kses_post( $input['password_reset_message'] );
 	$input['password_reset_subject'] = sanitize_text_field( $input['password_reset_subject'] );
 	return $input;
 }
@@ -105,6 +110,7 @@ function chuck_modify_password_reset_message( $message, $key, $user_login, $user
 
 	$message = str_replace( '[reset_password_url]', network_site_url( "wp-login.php?action=rp&key=$key&login=" . rawurlencode( $user_login ), 'login' ), $message );
 	$message = str_replace( '[site_name]', get_bloginfo( 'name' ), $message );
+	$message = str_replace( '[user_login]', $user_login, $message );
 
 	return $message;
 }
@@ -114,6 +120,7 @@ add_filter( 'retrieve_password_message', 'chuck_modify_password_reset_message', 
 function chuck_modify_password_reset_subject( $title ) {
 	$options = get_option( 'chuck_secret_settings_options' );
 	$subject = isset( $options['password_reset_subject'] ) ? $options['password_reset_subject'] : '';
+	$subject = str_replace( '[site_name]', get_bloginfo( 'name' ), $subject );
 
 	return $subject;
 }
