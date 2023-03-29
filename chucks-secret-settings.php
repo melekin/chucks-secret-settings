@@ -3,7 +3,7 @@
  * Plugin Name: Chuck's Secret Settings
  * Plugin URI: https://github.com/melekin/chucks-secret-settings
  * Description: Adds a new configuration page to the settings menu
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: Charles Peck
  * Author URI: https://g.dev/chuck
  * License: GPL2
@@ -64,6 +64,22 @@ function chuck_settings_init() {
 		'chuck_password_reset_message',
 		'Password Reset Email Message',
 		'chuck_password_reset_message_callback',
+		'chuck_secret_settings',
+		'chuck_secret_settings_section'
+	);
+	
+	add_settings_field(
+		'custom_email_name', 
+		'WordPress Notification From Email Name', 
+		'custom_email_name_setting_callback', 
+		'chuck_secret_settings',
+		'chuck_secret_settings_section'
+	);
+    
+	add_settings_field(
+		'custom_email_address', 
+		'WordPress Notification Email Address', 
+		'custom_email_address_setting_callback', 
 		'chuck_secret_settings',
 		'chuck_secret_settings_section'
 	);
@@ -128,3 +144,31 @@ add_filter( 'retrieve_password_title', 'chuck_modify_password_reset_subject' );
 
 // Allow the plugin to be easily extended
 do_action( 'chucks-secret-settings' );
+
+// Callback function to render the new email address field
+function custom_email_address_setting_callback(){
+    $value = get_option('custom_email_address');
+    echo '<input type="email" id="custom_email_address" name="custom_email_address" value="' . esc_attr($value) . '" />';
+}
+
+// Callback function to render the new "From" name field
+function custom_email_name_setting_callback(){
+    $value = get_option('custom_email_name');
+    echo '<input type="text" id="custom_email_name" name="custom_email_name" value="' . esc_attr($value) . '" />';
+}
+
+// Change the email address and "From" name used by WordPress to send notifications
+add_filter('wp_mail_from', 'custom_email_from');
+add_filter('wp_mail_from_name', 'custom_email_from_name');
+function custom_email_from($original_email_address){
+    if(get_option('custom_email_address')){
+        return get_option('custom_email_address');
+    }
+    return $original_email_address;
+}
+function custom_email_from_name($original_email_from){
+    if(get_option('custom_email_name')){
+        return get_option('custom_email_name');
+    }
+    return $original_email_from;
+}
